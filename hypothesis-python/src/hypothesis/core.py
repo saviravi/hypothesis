@@ -829,6 +829,8 @@ class StateForActualGivenExecution:
         self._start_timestamp = time.time()
         self._string_repr = ""
         self._timing_features = {}
+        self.start_time = 0
+        self.end_time = 0
 
     @property
     def test_identifier(self):
@@ -1208,7 +1210,9 @@ class StateForActualGivenExecution:
         )
         # Use the Conjecture engine to run the test function many times
         # on different inputs.
+        self.start_time = time.perf_counter()
         runner.run()
+        self.end_time = time.perf_counter()
         note_statistics(runner.statistics)
         if TESTCASE_CALLBACKS:
             self._deliver_information_message(
@@ -1749,10 +1753,12 @@ def given(
                     try:
                         runner.subTest = types.MethodType(fake_subTest, runner)
                         state.run_engine()
+                        report(f"Runtime: {state.end_time - state.start_time}")
                     finally:
                         runner.subTest = subTest
                 else:
                     state.run_engine()
+                    report(f"Runtime for multiple inputs: {state.end_time - state.start_time}")
             except BaseException as e:
                 # The exception caught here should either be an actual test
                 # failure (or BaseExceptionGroup), or some kind of fatal error
@@ -1761,6 +1767,7 @@ def given(
                 with local_settings(settings):
                     if not (state.failed_normally or generated_seed is None):
                         if running_under_pytest:
+                            report(f"failed input number: {runner.found_bug}")
                             report(
                                 f"You can add @seed({generated_seed}) to this test or "
                                 f"run pytest with --hypothesis-seed={generated_seed} "

@@ -285,6 +285,7 @@ class ConjectureRunner:
 
         self.__failed_realize_count = 0
         self._verified_by = None  # note unsound verification by alt backends
+        self.found_bug = None
 
     @property
     def using_hypothesis_backend(self):
@@ -577,6 +578,8 @@ class ConjectureRunner:
             self.overrun_examples += 1
 
         if data.status == Status.INTERESTING:
+            if self.found_bug is None:
+                self.found_bug = self.call_count
             if not self.using_hypothesis_backend:
                 # drive the ir tree through the test function to convert it
                 # to a buffer
