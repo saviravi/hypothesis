@@ -65,6 +65,7 @@ check to assure Hypothesis that you understand what you are doing.
 
 STATS_KEY = "_hypothesis_stats"
 FAILING_EXAMPLES_KEY = "_hypothesis_failing_examples"
+EXPERIMENT_REPORT = "_hypothesis_experiment_report"
 
 
 class StoringReporter:
@@ -128,7 +129,7 @@ else:
             PRINT_STATISTICS_OPTION,
             action="store_true",
             help="Configure when statistics are printed",
-            default=False,
+            default=True,
         )
         group.addoption(
             SEED_OPTION,
@@ -331,6 +332,9 @@ else:
             return
 
         terminalreporter = item.config.pluginmanager.getplugin("terminalreporter")
+        if terminalreporter is not None:
+            report.__dict__[EXPERIMENT_REPORT] = True
+            pass
 
         if hasattr(item, "hypothesis_statistics"):
             stats = item.hypothesis_statistics
@@ -407,9 +411,16 @@ else:
                 return
             if not _WROTE_TO:
                 terminalreporter.section("Hypothesis")
-            terminalreporter.write_line(
-                f"`git apply {fname}` to add failing examples to your code."
-            )
+            # terminalreporter.write_line(
+            #     f"`{reports[0].__dict__}`"
+            # )
+        
+        if not _WROTE_TO and not failing_examples:
+            terminalreporter.section("Hypothesis")
+            # terminalreporter.write_line(
+            #     f"reports: {reports}"
+            # )
+
 
     def pytest_collection_modifyitems(items):
         if "hypothesis" not in sys.modules:

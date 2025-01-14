@@ -583,7 +583,8 @@ def _validate_phases(phases):
 
 settings._define_setting(
     "phases",
-    default=tuple(Phase),
+    # only include explicit and generated inputs
+    default=(Phase.explicit, Phase.generate),
     description=(
         "Control which phases should be run. "
         "See :ref:`the full documentation for more details <phases>`"

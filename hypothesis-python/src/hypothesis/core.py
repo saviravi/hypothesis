@@ -1214,6 +1214,12 @@ class StateForActualGivenExecution:
         runner.run()
         self.end_time = time.perf_counter()
         note_statistics(runner.statistics)
+        def calc_total_runtime(test_cases):
+            total = 0
+            for test in test_cases:
+                if test['status'] == 'valid':
+                    total += test['runtime']
+            return total
         if TESTCASE_CALLBACKS:
             self._deliver_information_message(
                 type="info",
@@ -1224,7 +1230,10 @@ class StateForActualGivenExecution:
                 p if isinstance(p := runner.provider, PrimitiveProvider) else p(None)
             ).observe_information_messages(lifetime="test_function"):
                 self._deliver_information_message(**msg)
-
+        # report(f"Sum of runtimes for each valid test case: {calc_total_runtime(runner.statistics['generate-phase']['test-cases'])}")
+        # report(f"bbbtotalex:{runner.call_count}")
+        # report(f"bbbfirstbug:{runner.first_bug_found_at}")
+        # report(f"bbboverallruntime:{self.end_time - self.start_time}")
         if runner.call_count == 0:
             return
         if runner.interesting_examples:
@@ -1595,7 +1604,6 @@ def given(
         def wrapped_test(*arguments, **kwargs):
             # Tell pytest to omit the body of this function from tracebacks
             __tracebackhide__ = True
-
             test = wrapped_test.hypothesis.inner_test
 
             if getattr(test, "is_hypothesis_test", False):
@@ -1746,19 +1754,19 @@ def given(
                 if not ran_explicit_examples:
                     raise SKIP_BECAUSE_NO_EXAMPLES
                 return
-
+            
             try:
                 if isinstance(runner, TestCase) and hasattr(runner, "subTest"):
                     subTest = runner.subTest
                     try:
                         runner.subTest = types.MethodType(fake_subTest, runner)
                         state.run_engine()
-                        report(f"Runtime: {state.end_time - state.start_time}")
+                        raise Exception(f"Fake exception to show report ")
                     finally:
                         runner.subTest = subTest
                 else:
                     state.run_engine()
-                    report(f"Runtime for multiple inputs: {state.end_time - state.start_time}")
+                    # raise Exception(f"Fake exception to show report 2")
             except BaseException as e:
                 # The exception caught here should either be an actual test
                 # failure (or BaseExceptionGroup), or some kind of fatal error
@@ -1767,7 +1775,6 @@ def given(
                 with local_settings(settings):
                     if not (state.failed_normally or generated_seed is None):
                         if running_under_pytest:
-                            report(f"failed input number: {runner.found_bug}")
                             report(
                                 f"You can add @seed({generated_seed}) to this test or "
                                 f"run pytest with --hypothesis-seed={generated_seed} "

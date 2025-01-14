@@ -78,7 +78,8 @@ def describe_statistics(stats_dict: "StatisticsDict") -> str:
     This function is responsible for the report which is printed in the
     terminal for our pytest --hypothesis-show-statistics option.
     """
-    lines = [stats_dict["nodeid"] + ":\n"] if "nodeid" in stats_dict else []
+    lines = [stats_dict["nodeid"]] if "nodeid" in stats_dict else []
+    lines.insert(0, "||||||||")
     prev_failures = 0
     for phase in (p.name for p in list(Phase)[1:]):
         d = cast("PhaseStatistics", stats_dict.get(phase + "-phase", {}))
@@ -89,22 +90,37 @@ def describe_statistics(stats_dict: "StatisticsDict") -> str:
         statuses = Counter(t["status"] for t in cases)
         runtime_ms = format_ms(t["runtime"] for t in cases)
         drawtime_ms = format_ms(t["drawtime"] for t in cases)
-        lines.append(
-            f"  - during {phase} phase ({d['duration-seconds']:.2f} seconds):\n"
-            f"    - Typical runtimes: {runtime_ms}, of which {drawtime_ms} in data generation\n"
-            f"    - {statuses['valid']} passing examples, {statuses['interesting']} "
-            f"failing examples, {statuses['invalid'] + statuses['overrun']} invalid examples"
-        )
-        # If we've found new distinct failures in this phase, report them
-        distinct_failures = d["distinct-failures"] - prev_failures
-        if distinct_failures:
-            plural = distinct_failures > 1
+        if phase == "generate":
             lines.append(
-                "    - Found {}{} distinct error{} in this phase".format(
-                    distinct_failures, " more" * bool(prev_failures), "s" * plural
-                )
+                f"bbbtotalex:{statuses['valid'] + statuses['interesting'] + statuses['invalid'] + statuses['overrun']}\n"
+                f"bbbfirstbug:{d['first-bug-found-at']}\n"
+                f"bbboverallruntime:{d['duration-seconds']:.2f}"
             )
-        prev_failures = d["distinct-failures"]
+            # distinct_failures = d["distinct-failures"] - prev_failures
+            # if distinct_failures:
+            #     plural = distinct_failures > 1
+            #     lines.append(
+            #         "    - Found {}{} distinct error{} in this phase".format(
+            #             distinct_failures, " more" * bool(prev_failures), "s" * plural
+            #         )
+            #     )
+        else:
+            lines.append(
+                f"  - during {phase} phase ({d['duration-seconds']:.2f} seconds):\n"
+                f"    - Typical runtimes: {runtime_ms}, of which {drawtime_ms} in data generation\n"
+                f"    - {statuses['valid']} passing examples, {statuses['interesting']} "
+                f"failing examples, {statuses['invalid'] + statuses['overrun']} invalid examples"
+            )
+            # If we've found new distinct failures in this phase, report them
+            distinct_failures = d["distinct-failures"] - prev_failures
+            if distinct_failures:
+                plural = distinct_failures > 1
+                lines.append(
+                    "    - Found {}{} distinct error{} in this phase".format(
+                        distinct_failures, " more" * bool(prev_failures), "s" * plural
+                    )
+                )
+            prev_failures = d["distinct-failures"]
         # Report events during the generate phase, if there were any
         if phase == "generate":
             events = Counter(sum((t["events"] for t in cases), []))
@@ -121,11 +137,11 @@ def describe_statistics(stats_dict: "StatisticsDict") -> str:
                     len(cases), d["shrinks-successful"]
                 )
             )
-        lines.append("")
-
-    target_lines = describe_targets(stats_dict.get("targets", {}))
-    if target_lines:
-        lines.append("  - " + target_lines[0])
-        lines.extend("    " + l for l in target_lines[1:])
-    lines.append("  - Stopped because " + stats_dict["stopped-because"])
+        # lines.append("")
+    lines.append("||||||||")
+    # target_lines = describe_targets(stats_dict.get("targets", {}))
+    # if target_lines:
+    #     lines.append("  - " + target_lines[0])
+    #     lines.extend("    " + l for l in target_lines[1:])
+    # lines.append("  - Stopped because " + stats_dict["stopped-because"])
     return "\n".join(lines)

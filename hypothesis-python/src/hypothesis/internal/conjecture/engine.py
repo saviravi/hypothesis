@@ -185,6 +185,7 @@ PhaseStatistics = TypedDict(
         "test-cases": list[CallStats],
         "distinct-failures": int,
         "shrinks-successful": int,
+        "first-bug-found-at": Optional[int],
     },
 )
 StatisticsDict = TypedDict(
@@ -311,12 +312,21 @@ class ConjectureRunner:
         finally:
             # We ignore the mypy type error here. Because `phase` is a string literal and "-phase" is a string literal
             # as well, the concatenation will always be valid key in the dictionary.
-            self.statistics[phase + "-phase"] = {  # type: ignore
-                "duration-seconds": time.perf_counter() - start_time,
-                "test-cases": list(self.stats_per_test_case),
-                "distinct-failures": len(self.interesting_examples),
-                "shrinks-successful": self.shrinks,
-            }
+            if phase == "generate":
+                self.statistics[phase + "-phase"] = {  # type: ignore
+                    "duration-seconds": time.perf_counter() - start_time,
+                    "test-cases": list(self.stats_per_test_case),
+                    "distinct-failures": len(self.interesting_examples),
+                    "shrinks-successful": self.shrinks,
+                    "first-bug-found-at": self.first_bug_found_at,
+                }
+            else:
+                self.statistics[phase + "-phase"] = {  # type: ignore
+                    "duration-seconds": time.perf_counter() - start_time,
+                    "test-cases": list(self.stats_per_test_case),
+                    "distinct-failures": len(self.interesting_examples),
+                    "shrinks-successful": self.shrinks,
+                }
 
     @property
     def should_optimise(self) -> bool:
@@ -578,8 +588,6 @@ class ConjectureRunner:
             self.overrun_examples += 1
 
         if data.status == Status.INTERESTING:
-            if self.found_bug is None:
-                self.found_bug = self.call_count
             if not self.using_hypothesis_backend:
                 # drive the ir tree through the test function to convert it
                 # to a buffer
