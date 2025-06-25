@@ -371,15 +371,15 @@ def _max_examples_validator(x):
             "example generation with the `phases` setting instead."
         )
     # always set max examples to 500
-    if x != 500:
-        return 500
+    # if x != 500:
+    #     return 500
     return x
 
 
 # set default number of examples to 500
 settings._define_setting(
     "max_examples",
-    default=500,
+    default=100,
     validator=_max_examples_validator,
     description="""
 Once this many satisfying examples have been considered without finding any

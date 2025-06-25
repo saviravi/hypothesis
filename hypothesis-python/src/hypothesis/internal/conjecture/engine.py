@@ -624,11 +624,13 @@ class ConjectureRunner:
             changed = False
             try:
                 existing = self.interesting_examples[key]  # type: ignore
+                if self.first_bug_found_at is None:
+                    self.first_bug_found_at = self.valid_examples if self.valid_examples is not None else self.call_count
             except KeyError:
                 changed = True
                 self.last_bug_found_at = self.call_count
                 if self.first_bug_found_at is None:
-                    self.first_bug_found_at = self.call_count
+                    self.first_bug_found_at = self.valid_examples if self.valid_examples is not None else self.call_count
             else:
                 if sort_key_ir(data.ir_nodes) < sort_key_ir(existing.ir_nodes):
                     self.shrinks += 1

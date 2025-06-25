@@ -93,6 +93,7 @@ def describe_statistics(stats_dict: "StatisticsDict") -> str:
         if phase == "generate":
             lines.append(
                 f"bbbtotalex:{statuses['valid'] + statuses['interesting'] + statuses['invalid'] + statuses['overrun']}\n"
+                f"bbbtotalvalid:{statuses['valid']}\n"
                 f"bbbfirstbug:{d['first-bug-found-at']}\n"
                 f"bbboverallruntime:{d['duration-seconds']:.2f}"
             )

@@ -1761,7 +1761,7 @@ def given(
                     try:
                         runner.subTest = types.MethodType(fake_subTest, runner)
                         state.run_engine()
-                        raise Exception(f"Fake exception to show report ")
+                        # raise Exception(f"Fake exception to show report ")
                     finally:
                         runner.subTest = subTest
                 else:
